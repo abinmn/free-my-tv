@@ -450,5 +450,7 @@
  "{time} left": "nog {time}",
  "{url}, code {code}": "{url}, code {code}",
  "{version} is out: build it again": "{version} is uit: bouw hem opnieuw",
- "← → to move · OK to drop · Back to cancel": "← → verplaatsen · OK neerzetten · Terug annuleren"
+ "← → to move · OK to drop · Back to cancel": "← → verplaatsen · OK neerzetten · Terug annuleren",
+ "Couldn't start channel. Open Jellyfin and try again.": "Kan kanaal niet starten. Open Jellyfin en probeer het opnieuw.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Live-tv · {first}–{last} van {total} · ◀ ▶ om te bladeren"
 }

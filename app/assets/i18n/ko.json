@@ -450,5 +450,7 @@
  "{time} left": "{time} 남음",
  "{url}, code {code}": "{url}, 코드 {code}",
  "{version} is out: build it again": "{version} 출시: 다시 빌드하세요",
- "← → to move · OK to drop · Back to cancel": "← → 이동 · OK 배치 · 뒤로 취소"
+ "← → to move · OK to drop · Back to cancel": "← → 이동 · OK 배치 · 뒤로 취소",
+ "Couldn't start channel. Open Jellyfin and try again.": "채널을 재생할 수 없습니다. Jellyfin을 열고 다시 시도하세요.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "실시간 TV · {total}개 중 {first}–{last} · ◀ ▶로 탐색"
 }

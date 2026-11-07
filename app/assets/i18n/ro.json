@@ -450,5 +450,7 @@
  "{time} left": "mai sunt {time}",
  "{url}, code {code}": "{url}, cod {code}",
  "{version} is out: build it again": "A apărut {version}: compilează din nou",
- "← → to move · OK to drop · Back to cancel": "← → mută · OK plasează · Înapoi anulează"
+ "← → to move · OK to drop · Back to cancel": "← → mută · OK plasează · Înapoi anulează",
+ "Couldn't start channel. Open Jellyfin and try again.": "Canalul nu a putut fi pornit. Deschide Jellyfin și încearcă din nou.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "TV în direct · {first}–{last} din {total} · ◀ ▶ pentru navigare"
 }

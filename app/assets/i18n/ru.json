@@ -450,5 +450,7 @@
  "{time} left": "осталось {time}",
  "{url}, code {code}": "{url}, код {code}",
  "{version} is out: build it again": "Вышла {version}: соберите заново",
- "← → to move · OK to drop · Back to cancel": "← → — переместить · OK — оставить · Назад — отмена"
+ "← → to move · OK to drop · Back to cancel": "← → — переместить · OK — оставить · Назад — отмена",
+ "Couldn't start channel. Open Jellyfin and try again.": "Не удалось включить канал. Откройте Jellyfin и попробуйте снова.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Прямой эфир · {first}–{last} из {total} · ◀ ▶ для просмотра"
 }

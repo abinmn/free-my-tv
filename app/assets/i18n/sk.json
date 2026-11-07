@@ -450,5 +450,7 @@
  "{time} left": "zostáva {time}",
  "{url}, code {code}": "{url}, kód {code}",
  "{version} is out: build it again": "Vyšla verzia {version}: zostavte ju znova",
- "← → to move · OK to drop · Back to cancel": "← → presunúť · OK umiestniť · Späť zrušiť"
+ "← → to move · OK to drop · Back to cancel": "← → presunúť · OK umiestniť · Späť zrušiť",
+ "Couldn't start channel. Open Jellyfin and try again.": "Kanál sa nepodarilo spustiť. Otvorte Jellyfin a skúste to znova.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Živé TV · {first}–{last} z {total} · ◀ ▶ na prehliadanie"
 }

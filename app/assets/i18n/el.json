@@ -450,5 +450,7 @@
  "{time} left": "απομένουν {time}",
  "{url}, code {code}": "{url}, κωδικός {code}",
  "{version} is out: build it again": "Βγήκε η {version}: φτιάξτε το ξανά",
- "← → to move · OK to drop · Back to cancel": "← → μετακίνηση · OK τοποθέτηση · Πίσω ακύρωση"
+ "← → to move · OK to drop · Back to cancel": "← → μετακίνηση · OK τοποθέτηση · Πίσω ακύρωση",
+ "Couldn't start channel. Open Jellyfin and try again.": "Δεν ήταν δυνατή η έναρξη του καναλιού. Ανοίξτε το Jellyfin και δοκιμάστε ξανά.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Ζωντανή TV · {first}–{last} από {total} · ◀ ▶ για περιήγηση"
 }

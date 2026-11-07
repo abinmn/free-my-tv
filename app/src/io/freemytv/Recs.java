@@ -48,6 +48,9 @@ import java.util.concurrent.Executors;
  */
 final class Recs {
     static final class Pick {
+        String liveId, liveNumber;
+        Bitmap liveLogo;
+        int liveColor = 0xFFF7F7FA;
         int id;
         String kind;            // "movie" or "tv"
         String title, backdrop, poster, meta = "", app, pkg;   // poster: the portrait image of the narrow cards
@@ -411,6 +414,7 @@ final class Recs {
 
     /** Name of the service the pick is on ("Netflix"), or empty. */
     static String serviceName(Pick p) {
+        if (p != null && p.liveId != null) return "Jellyfin";
         return p == null || p.app == null ? "" : name(p.app);
     }
 

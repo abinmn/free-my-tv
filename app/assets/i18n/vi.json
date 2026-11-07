@@ -450,5 +450,7 @@
  "{time} left": "còn {time}",
  "{url}, code {code}": "{url}, mã {code}",
  "{version} is out: build it again": "Đã có {version}: hãy build lại",
- "← → to move · OK to drop · Back to cancel": "← → di chuyển · OK đặt · Quay lại hủy"
+ "← → to move · OK to drop · Back to cancel": "← → di chuyển · OK đặt · Quay lại hủy",
+ "Couldn't start channel. Open Jellyfin and try again.": "Không thể phát kênh. Mở Jellyfin và thử lại.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "TV trực tiếp · {first}–{last} trên {total} · ◀ ▶ để duyệt"
 }

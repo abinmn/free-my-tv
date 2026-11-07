@@ -450,5 +450,7 @@
  "{time} left": "{time} left",
  "{url}, code {code}": "{url}, code {code}",
  "{version} is out: build it again": "{version} is out: build it again",
- "← → to move · OK to drop · Back to cancel": "← → to move · OK to drop · Back to cancel"
+ "← → to move · OK to drop · Back to cancel": "← → to move · OK to drop · Back to cancel",
+ "Couldn't start channel. Open Jellyfin and try again.": "Couldn't start channel. Open Jellyfin and try again.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Live TV · {first}–{last} of {total} · ◀ ▶ to browse"
 }

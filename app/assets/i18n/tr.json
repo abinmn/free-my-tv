@@ -450,5 +450,7 @@
  "{time} left": "{time} kaldı",
  "{url}, code {code}": "{url}, kod {code}",
  "{version} is out: build it again": "{version} çıktı: yeniden derleyin",
- "← → to move · OK to drop · Back to cancel": "← → taşı · OK bırak · Geri iptal"
+ "← → to move · OK to drop · Back to cancel": "← → taşı · OK bırak · Geri iptal",
+ "Couldn't start channel. Open Jellyfin and try again.": "Kanal başlatılamadı. Jellyfin uygulamasını açıp tekrar deneyin.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Canlı TV · {total} kanaldan {first}–{last} · gezinmek için ◀ ▶"
 }

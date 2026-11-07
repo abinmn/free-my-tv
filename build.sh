@@ -97,9 +97,10 @@ lan_server() {   # lan_server <key>: checks it; the host of an http:// one joins
 }
 lan_server immich_server
 lan_server home_assistant_url
+lan_server jellyfin_server
 # Keys that would let another app on the TV into the user's own servers stay out of the APK: tools/send_key.py sends
 # them to the TV (Secrets).
-for key in immich_api_key home_assistant_token; do
+for key in immich_api_key home_assistant_token jellyfin_api_key jellyfin_connection; do
   if [ -n "$(prop "$key" '')" ]; then
     echo "config.properties: $key isn't built into the app (any app on the TV could read it there)." >&2
     echo "Send it to the TV instead (python3 tools/send_key.py <TV IP> $key), then remove it here." >&2
@@ -130,6 +131,7 @@ final class Config {
     static final String TEMPERATURE = "$(prop temperature auto)";
     static final String HIDE_SERVICES = "$(prop hide_services '')";
     static final String THEME = "$(prop theme auto)";
+    static final String JELLYFIN_SERVER = "$(prop jellyfin_server '')";
     static final String IMMICH_SERVER = "$(prop immich_server '')";
     static final String HA_URL = "$(prop home_assistant_url '')";
     static final String HA_ENTITIES = "$(prop home_assistant_entities '')";

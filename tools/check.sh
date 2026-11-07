@@ -19,6 +19,7 @@ if [ "$what" = all ] || [ "$what" = android ]; then
   ./build.sh
   bash tools/test-remote.sh
   bash tools/test-order.sh
+  python3 -m unittest discover -s tests -p 'test_jellyfin_setup.py'
 fi
 
 if [ "$what" = all ] || [ "$what" = web ]; then

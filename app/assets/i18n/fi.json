@@ -450,5 +450,7 @@
  "{time} left": "{time} jäljellä",
  "{url}, code {code}": "{url}, koodi {code}",
  "{version} is out: build it again": "{version} on julkaistu: rakenna se uudelleen",
- "← → to move · OK to drop · Back to cancel": "← → siirrä · OK pudota · Takaisin peruuta"
+ "← → to move · OK to drop · Back to cancel": "← → siirrä · OK pudota · Takaisin peruuta",
+ "Couldn't start channel. Open Jellyfin and try again.": "Kanavaa ei voitu käynnistää. Avaa Jellyfin ja yritä uudelleen.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Suora TV · {first}–{last} / {total} · ◀ ▶ selaa"
 }
