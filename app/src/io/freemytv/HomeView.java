@@ -133,6 +133,39 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final HomeData data;
     private final Recs recs;
     private final NowPlaying.Watch playing;
+    private final JellyfinLive live;
+    private static final int Z_LIVE = 12;
+    private static final float LIVE_HEIGHT = 260;
+    private final Spring liveScroll = new Spring(0.46f, 0.92f, 0);
+    private final Spring[] liveFocus = new Spring[JellyfinLive.PAGE_SIZE];
+    private final RectF[] liveRects = new RectF[JellyfinLive.PAGE_SIZE];
+    private List<Recs.Pick> liveChannels = new ArrayList<>();
+    private final String[] liveLabels = new String[JellyfinLive.PAGE_SIZE], liveDetails = new String[JellyfinLive.PAGE_SIZE];
+    private int liveIndex, liveStart;
+    private String liveHeading = "Live TV";
+    private Paint liveTitlePaint, liveMetaPaint;
+    private final Runnable liveChanged = this::updateLive;
+
+    private void updateLive() {
+        if (!running || !JellyfinLive.enabled()) return;
+        liveIndex = Math.min(liveIndex, Math.max(0, live.count() - 1));
+        liveStart = liveIndex / JellyfinLive.PAGE_SIZE * JellyfinLive.PAGE_SIZE;
+        liveChannels = live.page(liveStart);
+        for (Recs.Pick p : liveChannels) p.liveLogo = live.logo(p);
+        for (int i = 0; i < liveChannels.size(); i++) {
+            Recs.Pick p = liveChannels.get(i);
+            float width = liveRects[i].width();
+            liveLabels[i] = lCardTitle == null || width <= 0 ? p.title
+                    : TextUtils.ellipsize(p.title, new TextPaint(lCardTitle), width, TextUtils.TruncateAt.END).toString();
+            liveDetails[i] = lCardMeta == null || width <= 0 ? p.meta
+                    : TextUtils.ellipsize(p.meta, new TextPaint(lCardMeta), width, TextUtils.TruncateAt.END).toString();
+        }
+        liveHeading = liveChannels.isEmpty() ? Ui.tr("Live TV") + " · " + live.status() : Ui.trf("Live TV · {first}–{last} of {total} · ◀ ▶ to browse",
+                "first", liveStart + 1, "last", liveStart + liveChannels.size(), "total", live.count());
+        drawerDirty = true;
+        retarget(false);
+        wake();
+    }
     private final Click click;
     private final Handler handler = new Handler(Looper.getMainLooper());
     /** The background follows the focused pick once it has been there this long (see bgFollow). */
@@ -595,6 +628,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             playing.start();   // the listener allowed after the screen showed (a no-op once watching)
             data.refreshIfStale();
             recs.refreshIfStale();
+            live.refresh();
             checkNotices();
             updatePalette();
             checkNight(true);
@@ -610,6 +644,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         data = HomeData.get(a);
         recs = Recs.get(a);
         playing = new NowPlaying.Watch(a, this::onPlaying);
+        live = JellyfinLive.get(a);
+        for (int i = 0; i < liveFocus.length; i++) {
+            liveFocus[i] = new Spring(0.3f, 0.85f, 0);
+            liveRects[i] = new RectF();
+        }
         click = new Click(a);
         shelfVisible = HomeApps.shelfVisible(a);
         ui = a.getSharedPreferences("home-ui", Context.MODE_PRIVATE);
@@ -698,8 +737,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         lastStep = 0;
         data.addListener(this);
         recs.addListener(this);
+        live.listen(liveChanged);
         data.refreshIfStale();
         recs.refreshIfStale();
+        live.resume();
+        updateLive();
         Photos.importInbox(getContext(), ownReady);   // photos a computer just sent
         ImmichPhotos.syncIfDue(getContext(), ownReady);   // or a new choice from the Immich server, every 6 hours
         if (tvInputs != null) tvInputs.registerCallback(inputCallback, handler);
@@ -744,6 +786,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         playing.stop();
         data.removeListener(this);
         recs.removeListener(this);
+        live.unlisten(liveChanged);
         if (tvInputs != null) tvInputs.unregisterCallback(inputCallback);
         stopStatus();
     }
@@ -772,6 +815,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         cardIndex = 0;
         sheetOpen = false;
         drawerOpen = false;
+        liveScroll.snap(0);
         if (animated) {
             sheet.target = 0;
             drawer.target = 0;
@@ -845,7 +889,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         // cheaper for the GPU to composite on every frame of the drawer animation.
         measure(platter, width, Math.round(320 * kk));
         measure(tiles, width, Math.round(270 * kk));
-        measure(drawerLayer, width, Math.round(600 * kk));
+        measure(drawerLayer, width, Math.round((600 + liveHeight()) * kk));
         measure(sheetLayer, width, height);
         measure(menuLayer, width, height);
         measure(toastLayer, width, Math.round(220 * kk));   // full width: a toast may sit right of a long title
@@ -894,6 +938,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         layoutShelf();
         layoutStatus();
         layoutDrawer();
+        updateLive();
         layoutLight();
         hero = null;
         heroFrom = null;
@@ -921,6 +966,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         lCardTitle = Ui.text(Ui.semibold, 31 * k, L_INK);
         lCardTitle.setLetterSpacing(0.012f);
         lCardMeta = Ui.text(Ui.medium, 25 * k, L_DIM);
+        liveTitlePaint = new Paint(lCardTitle);
+        liveMetaPaint = new Paint(lCardMeta);
         lQuote = Ui.numbers(Ui.regular, 21 * k, L_FAINT);
         lTip = Ui.text(Ui.semibold, 25 * k, L_INK);
         lTip.setTextAlign(Paint.Align.CENTER);
@@ -1008,9 +1055,9 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
         if (topMoving) status.invalidate();
         heroMoving |= topMoving | cardsMoving;
-        boolean drawerItemsMoving = step(drawerFocus, dt);
+        boolean drawerItemsMoving = step(drawerFocus, dt) | step(liveFocus, dt);
         boolean gridMoving = step(gridFocus, dt) | scroll.step(dt);
-        boolean drawerMoving = drawer.step(dt);
+        boolean drawerMoving = drawer.step(dt) | liveScroll.step(dt);
         boolean sheetMoving = sheet.step(dt);
         boolean toastFading = tickToast(up);
         boolean heroFading = tickHeroFade(up);
@@ -1096,13 +1143,13 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         float d = drawer.value, dc = Ui.clamp(d), s = Ui.clamp(sheet.value);
         float home = 1 - s, top = home * (1 - smoothstep(0, 0.32f, dc));
         float shift = SHIFT * k;
-        float lift = -d * shift;
+        float lift = -d * shift - liveScroll.value * liveHeight() * k;
         show(heroLayer, top, lift);
         show(status, top, lift);
         show(platter, home, lift);
         show(tiles, home, lift);
         float da = home * smoothstep(0.1f, 0.6f, dc);
-        drawerLayer.setTranslationY((1 - d) * shift);
+        drawerLayer.setTranslationY((1 - d) * shift - liveScroll.value * liveHeight() * k);
         drawerLayer.setAlpha(da);
         drawerLayer.setVisibility(da > 0.002f ? VISIBLE : INVISIBLE);
         sheetLayer.setVisibility(s > 0.001f || sheetOpen ? VISIBLE : INVISIBLE);
@@ -2043,14 +2090,19 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         float gap = 18 * k, groupGap = 56 * k;
         int groups = Math.max(1, (drawerInputs > 0 ? 1 : 0) + (drawerHome > drawerInputs ? 1 : 0) + (n > drawerHome ? 1 : 0));
         float tw = Math.min(230 * k, (right - left - Math.max(0, n - groups) * gap - (groups - 1) * groupGap) / Math.max(1, n));
-        float x = left, top = ROW_TOP * k;
+        float liveWidth = (right - left - 3 * 32 * k) / JellyfinLive.PAGE_SIZE;
+        for (int i = 0; i < liveRects.length; i++) {
+            float liveX = left + i * (liveWidth + 32 * k);
+            liveRects[i].set(liveX, ROW_TOP * k, liveX + liveWidth, (ROW_TOP + 150) * k);
+        }
+        float x = left, top = (ROW_TOP + liveHeight()) * k;
         for (int i = 0; i < n; i++) {
             if ((i == drawerInputs || i == drawerHome) && i > 0) x += groupGap - gap;
             drawerRects[i].set(x, top, x + tw, top + ROW_H * k);
             snap(drawerRects[i]);
             x += tw + gap;
         }
-        float cardsTop = CARDS_TOP * k, split = left + (right - left) * 0.585f;
+        float cardsTop = (CARDS_TOP + liveHeight()) * k, split = left + (right - left) * 0.585f;
         boolean wx = Prefs.weather(), qt = Prefs.quotes() && HomeData.active().length > 0;
         // A card that is off gives its room to the other one.
         weatherCard.set(left, cardsTop, qt ? split - 16 * k : right, cardsTop + CARDS_H * k);
@@ -2069,10 +2121,23 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         drawerDirty = true;
     }
 
+    private static float liveHeight() { return JellyfinLive.enabled() ? LIVE_HEIGHT : 0; }
+
+    private void openLiveRow() {
+        if (!JellyfinLive.enabled()) { closeDrawer(); return; }
+        drawerOpen = true;
+        drawer.target = 1;
+        liveScroll.target = 0;
+        zone = Z_LIVE;
+        updateLive();
+        drawerDirty = motionDirty = true;
+    }
+
     private void openDrawer() {
         if (drawerItems.isEmpty()) return;
         drawerOpen = true;
         drawer.target = 1;
+        liveScroll.target = JellyfinLive.enabled() ? 1 : 0;
         zone = Z_DRAWER;
         drawerIndex = shelf.isEmpty() ? 0 : nearest(drawerRects, tileRects[shelfIndex].centerX());
         for (int i = 0; i < drawerFocus.length; i++) drawerFocus[i].snap(i == drawerIndex ? 1 : 0);
@@ -2083,6 +2148,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void closeDrawer() {
         drawerOpen = false;
         drawer.target = 0;
+        liveScroll.target = 0;
         zone = Z_SHELF;
         for (Spring f : drawerFocus) f.snap(0);   // the drawer goes away: its focus doesn't need to animate
         handler.removeCallbacks(homeTick);
@@ -2151,7 +2217,48 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         drawerGlass(c, r, 30 * k, 0.72f, 0x1A000000, 10 * k);
     }
 
+    private void drawLiveRow(Canvas c) {
+        if (!JellyfinLive.enabled()) return;
+        rowTitle.setColor(tone(L_DIM, 0xB3FFFFFF));
+        c.drawText(liveHeading, MARGIN * k, ROW_TITLE * k, rowTitle);
+        liveTitlePaint.setColor(drawerInk(1));
+        liveMetaPaint.setColor(drawerInk(0.65f));
+        imagePaint.setAlpha(255);
+        for (int i = 0; i < liveChannels.size(); i++) {
+            Recs.Pick p = liveChannels.get(i);
+            RectF base = liveRects[i];
+            float f = Ui.clamp(liveFocus[i].value), s = 1 + 0.06f * f;
+            float cx = base.centerX(), cy = base.centerY() - 4 * k * f;
+            cell.set(cx - base.width() * s / 2, cy - base.height() * s / 2,
+                    cx + base.width() * s / 2, cy + base.height() * s / 2);
+            float radius = 18 * k;
+            if (f > 0.01f) {
+                tmp.set(cell); tmp.offset(0, 10 * k);
+                shadowDeep.setColor(Ui.alpha(0xFF000000, 0.4f * f));
+                shadows.draw(c, tmp, radius, DEEP_BLUR * k, shadowDeep);
+            }
+            fill.setShader(null);
+            fill.setColor(p.liveColor);
+            c.drawRoundRect(cell, radius, radius, fill);
+            if (p.liveLogo != null) {
+                float scale = Math.min(cell.width() * 0.78f / p.liveLogo.getWidth(), cell.height() * 0.72f / p.liveLogo.getHeight());
+                float iw = p.liveLogo.getWidth() * scale, ih = p.liveLogo.getHeight() * scale;
+                tmp.set(cx - iw / 2, cy - ih / 2, cx + iw / 2, cy + ih / 2);
+                c.drawBitmap(p.liveLogo, null, tmp, imagePaint);
+            } else Symbols.draw(getContext(), c, "live_tv", cx, cy, 60 * k, L_DIM);
+            if (f > 0.01f) {
+                border.setColor(Ui.alpha(tone(0xFF007AFF, 0xFFFFFFFF), f));
+                border.setStrokeWidth(4 * k);
+                c.drawRoundRect(cell, radius, radius, border);
+                border.setStrokeWidth(2 * k);
+            }
+            c.drawText(liveLabels[i], base.left, base.bottom + 36 * k, liveTitlePaint);
+            c.drawText(liveDetails[i], base.left, base.bottom + 65 * k, liveMetaPaint);
+        }
+    }
+
     private void drawDrawer(Canvas c) {
+        drawLiveRow(c);
         if (drawerItems.isEmpty()) return;
         rowTitle.setColor(tone(L_DIM, 0xB3FFFFFF));
         cardTitle.setColor(tone(L_DIM, 0xB3FFFFFF));
@@ -2163,7 +2270,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         hourTemp.setColor(drawerInk(0.95f));
         dayLow.setColor(tone(L_DIM, 0xADFFFFFF));
         pricePaint.setColor(drawerInk(0.95f));
-        float titleBase = ROW_TITLE * k;
+        float titleBase = (ROW_TITLE + liveHeight()) * k;
         if (drawerInputs > 0) c.drawText(Ui.tr("Inputs"), drawerRects[0].left + 4 * k, titleBase, rowTitle);
         if (drawerInputs < drawerHome) c.drawText(Ui.tr("Shortcuts"), drawerRects[drawerInputs].left + 4 * k, titleBase, rowTitle);
         if (drawerHome < drawerItems.size()) c.drawText("Home Assistant", drawerRects[drawerHome].left + 4 * k, titleBase, rowTitle);
@@ -2385,6 +2492,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         boolean tilesChanged = aim(tileFocus, !sheetOpen && zone == Z_SHELF ? shelfIndex : -1, snap);
         boolean statusChanged = aim(statusFocus, !sheetOpen && zone == Z_STATUS ? statusIndex : -1, snap);
         boolean drawerChanged = aim(drawerFocus, !sheetOpen && zone == Z_DRAWER ? drawerIndex : -1, snap);
+        drawerChanged |= aim(liveFocus, !sheetOpen && zone == Z_LIVE && !liveChannels.isEmpty()
+                ? liveIndex - liveStart : -1, snap);
         boolean heroChanged = heroFocus.target != (!sheetOpen && zone == Z_HERO ? 1 : 0);
         heroFocus.target = !sheetOpen && zone == Z_HERO ? 1 : 0;
         if (snap) heroFocus.snap(heroFocus.target);
@@ -2763,7 +2872,12 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             return;
         }
         if (drawerOpen) {
-            int hit = hit(drawerRects, x, y);
+            int channel = hit(liveRects, x, y - drawerLayer.getTranslationY());
+            if (JellyfinLive.enabled() && channel >= 0 && channel < liveChannels.size()) {
+                if (entered(Z_LIVE, channel)) { zone = Z_LIVE; liveIndex = liveStart + channel; retarget(false); }
+                return;
+            }
+            int hit = hit(drawerRects, x, y - drawerLayer.getTranslationY());
             if (entered(Z_DRAWER, hit) && (zone != Z_DRAWER || drawerIndex != hit)) {
                 zone = Z_DRAWER;
                 drawerIndex = hit;
@@ -2813,6 +2927,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 retargetGrid(false);
                 gridDirty = true;
             }
+        } else if (drawerOpen && zone == Z_LIVE) {
+            move(dir, 0);
         } else if (drawerOpen) {
             int next = Math.max(0, Math.min(drawerItems.size() - 1, drawerIndex + dir));
             if (next != drawerIndex) {
@@ -2869,7 +2985,15 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             return;
         }
         if (drawerOpen) {
-            int hit = hit(drawerRects, x, y);
+            int channel = hit(liveRects, x, y - drawerLayer.getTranslationY());
+            if (JellyfinLive.enabled() && channel >= 0 && channel < liveChannels.size()) {
+                zone = Z_LIVE;
+                liveIndex = liveStart + channel;
+                retarget(false);
+                activate();
+                return;
+            }
+            int hit = hit(drawerRects, x, y - drawerLayer.getTranslationY());
             if (hit >= 0) {
                 zone = Z_DRAWER;
                 drawerIndex = hit;
@@ -3074,7 +3198,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void back() {
         if (sheetOpen) {
             closeSheet();
-        } else if (zone == Z_DRAWER || zone == WIDGETS) {
+        } else if (zone == Z_DRAWER || zone == WIDGETS || zone == Z_LIVE) {
             closeDrawer();
             retarget(false);
         } else if (zone != Z_SHELF) {
@@ -3089,6 +3213,22 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void move(int dx, int dy) {
         if (sheetOpen) {
             moveGrid(dx, dy);
+            return;
+        }
+        if (zone == Z_SHELF && dy > 0 && JellyfinLive.enabled()) {
+            openLiveRow();
+            retarget(false);
+            click.move();
+            return;
+        }
+        if (zone == Z_LIVE) {
+            if (dx != 0 && live.count() > 0) {
+                liveIndex = Math.max(0, Math.min(live.count() - 1, liveIndex + dx));
+                updateLive();
+            } else if (dy < 0) closeDrawer();
+            else if (dy > 0) openDrawer();
+            retarget(false);
+            click.move();
             return;
         }
         if (moveLight(dx, dy)) return;
@@ -3157,7 +3297,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                     if (next == drawerIndex) return;
                     drawerIndex = next;
                 } else if (dy < 0) {
-                    closeDrawer();
+                    openLiveRow();
                 } else if (talkBack() && !widgets().isEmpty()) {
                     // Only with TalkBack: the widgets are there to be read, and this is how it gets to them.
                     zone = WIDGETS;
@@ -3248,6 +3388,14 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
         HomeApps.Item it;
         RectF r;
+        if (!sheetOpen && zone == Z_LIVE) {
+            int i = liveIndex - liveStart;
+            if (i < 0 || i >= liveChannels.size()) return;
+            click.open();
+            live.play(activity, liveChannels.get(i), () -> android.widget.Toast.makeText(activity,
+                    Ui.tr("Couldn't start channel. Open Jellyfin and try again."), android.widget.Toast.LENGTH_LONG).show());
+            return;
+        }
         if (!sheetOpen && zone == WIDGETS) return;   // a widget is only read
         if (sheetOpen) {
             if (others.isEmpty()) return;
@@ -3659,6 +3807,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         for (int i = 0; i < Math.min(Recs.MAX_CARDS, cards.size()); i++) out.add(a11yId(Z_CARDS, i));
         if (continueMode()) for (int i = 0; i < watching.size(); i++) out.add(a11yId(Z_WATCH, i));
         for (int i = shelfFirst; i < Math.min(shelf.size(), shelfFirst + shelfVisible); i++) out.add(a11yId(Z_SHELF, i));
+        for (int i = 0; i < liveChannels.size(); i++) out.add(a11yId(Z_LIVE, i));
         for (int i = 0; i < drawerItems.size(); i++) out.add(a11yId(Z_DRAWER, i));
         if (drawerOpen && Prefs.weather()) out.add(a11yId(WIDGETS, 0));
         if (drawerOpen && Prefs.quotes() && HomeData.active().length > 0) out.add(a11yId(WIDGETS, 1));
@@ -3691,6 +3840,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 String left = timeLeft(it);
                 return it.title + (it.episode != null ? ", " + it.episode : "") + (left != null ? ", " + left : "")
                         + (it.app != null && !it.app.isEmpty() ? ". " + Ui.trf("App: {app}", "app", it.app) : "");
+            case Z_LIVE: return i < liveChannels.size() ? pickText(liveChannels.get(i)) : "";
             case Z_SHELF:
                 if (reordering && !reorderTop && i == shelfIndex) {
                     return Ui.trf("Moving {app}, position {n} of {total}",
@@ -3754,12 +3904,17 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             case Z_DRAWER:
                 if (i >= drawerRects.length) return false;
                 a11yRect.set(drawerRects[i]);
-                dy = drawerOpen ? 0 : h;
+                dy = drawerOpen ? drawerLayer.getTranslationY() : h;
+                break;
+            case Z_LIVE:
+                if (i >= liveChannels.size()) return false;
+                a11yRect.set(liveRects[i]);
+                dy = drawerOpen ? drawerLayer.getTranslationY() : h;
                 break;
             case WIDGETS:
                 if (!drawerOpen) return false;
                 a11yRect.set(i == 0 ? weatherCard : quotesCard);
-                dy = 0;
+                dy = drawerLayer.getTranslationY();
                 break;
             default:
                 return false;
@@ -3796,6 +3951,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             case Z_TOP: return a11yId(Z_TOP, topIndex);
             case Z_CARDS: return cardIndex < cards.size() ? a11yId(Z_CARDS, cardIndex) : -1;
             case Z_WATCH: return watchIndex < watching.size() ? a11yId(Z_WATCH, watchIndex) : -1;
+            case Z_LIVE: return liveChannels.isEmpty() ? -1 : a11yId(Z_LIVE, liveIndex - liveStart);
             case Z_SHELF: return shelf.isEmpty() ? -1 : a11yId(Z_SHELF, shelfIndex);
             case Z_DRAWER: return drawerItems.isEmpty() ? -1 : a11yId(Z_DRAWER, drawerIndex);
             case WIDGETS: return a11yId(WIDGETS, widgetIndex);
@@ -3857,13 +4013,19 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
         if (sheetOpen || reordering) return;
         switch (group) {
+            case Z_LIVE:
+                if (i >= liveChannels.size()) return;
+                openLiveRow();
+                liveIndex = liveStart + i;
+                break;
             case Z_DRAWER:
                 if (i >= drawerItems.size()) return;
-                if (!drawerOpen) openDrawer();
+                openDrawer();
                 drawerIndex = i;
                 break;
             case WIDGETS:
                 if (!widgets().contains(i)) return;
+                liveScroll.target = JellyfinLive.enabled() ? 1 : 0;
                 widgetIndex = i;
                 break;
             case Z_TOP:

@@ -450,5 +450,7 @@
  "{time} left": "{time} lagi",
  "{url}, code {code}": "{url}, kode {code}",
  "{version} is out: build it again": "{version} sudah rilis: build ulang",
- "← → to move · OK to drop · Back to cancel": "← → pindahkan · OK letakkan · Kembali batalkan"
+ "← → to move · OK to drop · Back to cancel": "← → pindahkan · OK letakkan · Kembali batalkan",
+ "Couldn't start channel. Open Jellyfin and try again.": "Tidak dapat memulai saluran. Buka Jellyfin dan coba lagi.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "TV Langsung · {first}–{last} dari {total} · ◀ ▶ untuk menjelajah"
 }

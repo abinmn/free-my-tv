@@ -450,5 +450,7 @@
  "{time} left": "quedan {time}",
  "{url}, code {code}": "{url}, código {code}",
  "{version} is out: build it again": "Salió la {version}: vuelve a compilarla",
- "← → to move · OK to drop · Back to cancel": "← → para mover · OK para soltar · Atrás para cancelar"
+ "← → to move · OK to drop · Back to cancel": "← → para mover · OK para soltar · Atrás para cancelar",
+ "Couldn't start channel. Open Jellyfin and try again.": "No se pudo iniciar el canal. Abre Jellyfin e inténtalo de nuevo.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "TV en directo · {first}–{last} de {total} · ◀ ▶ para explorar"
 }

@@ -450,5 +450,7 @@
  "{time} left": "残り{time}",
  "{url}, code {code}": "{url}、コード {code}",
  "{version} is out: build it again": "{version} が出ました：もう一度ビルドしてください",
- "← → to move · OK to drop · Back to cancel": "← → 移動 · OK 配置 · 戻る キャンセル"
+ "← → to move · OK to drop · Back to cancel": "← → 移動 · OK 配置 · 戻る キャンセル",
+ "Couldn't start channel. Open Jellyfin and try again.": "チャンネルを再生できませんでした。Jellyfinを開いて、もう一度お試しください。",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "ライブTV · {total}件中{first}–{last} · ◀ ▶で移動"
 }

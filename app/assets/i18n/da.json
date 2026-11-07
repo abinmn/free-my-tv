@@ -450,5 +450,7 @@
  "{time} left": "{time} tilbage",
  "{url}, code {code}": "{url}, kode {code}",
  "{version} is out: build it again": "{version} er ude: byg den igen",
- "← → to move · OK to drop · Back to cancel": "← → flyt · OK slip · Tilbage annuller"
+ "← → to move · OK to drop · Back to cancel": "← → flyt · OK slip · Tilbage annuller",
+ "Couldn't start channel. Open Jellyfin and try again.": "Kanalen kunne ikke startes. Åbn Jellyfin, og prøv igen.",
+ "Live TV · {first}–{last} of {total} · ◀ ▶ to browse": "Live-tv · {first}–{last} af {total} · ◀ ▶ for at gennemse"
 }

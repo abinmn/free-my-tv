@@ -160,6 +160,7 @@ The first values come from `config.properties`, created by the first build (Goog
 | `plex_url` and `plex_token` | Optional, your Plex server's `plex.direct` address and token: its newest titles join the picks and open on their page | empty |
 | `trakt_client_id` | Optional: the Client ID of your own free [Trakt](https://trakt.tv/oauth/applications) API app. Home Settings > Picks then gets a Trakt row to sign in with a code, and the picks start with what you're in the middle of, bring in your watchlist and leave out what you've watched. Google TV only | empty |
 | `home_assistant_url`, `home_assistant_entities` | Optional: buttons for your own [Home Assistant](#home-assistant-buttons-optional) in the bottom drawer (Google TV only; the token goes from the computer, not in here) | empty |
+| `jellyfin_server` | Optional: [Jellyfin live channels](#jellyfin-live-tv-optional) below the app shelf (Android TV; connection sent separately over ADB) | empty |
 | `latitude`, `longitude` | Your city, for the weather and the sunset | New York |
 | `city` | The name on the weather card | `Weather` |
 | `hide_animation` | Leave cartoons and anime out of the picks; *Cartoons and anime* in Home Settings (under *Picks* on Google TV) changes it on the TV | `false` |
@@ -180,6 +181,37 @@ The first values come from `config.properties`, created by the first build (Goog
 | `open_picks_in` | Where a pick opens: `apps` (the streaming app that has it) or `nuvio` (its page in Nuvio, when the TV has it); Home Settings changes it on the TV. LG only (Samsung passes no link yet) | `apps` |
 
 Changed something? Run `./build.sh` and install again. Keep `freemytv.keystore`: updates are signed with it.
+
+### Jellyfin Live TV (optional)
+
+On Android TV, your Jellyfin channels can be an extra row below the app shelf. The existing home, picks, apps, inputs,
+shortcuts and weather remain available. Nothing changes, and no Jellyfin requests are made, until a server is configured.
+
+1. Set `jellyfin_server` in `config.properties` to the server address **the TV can reach**, then build and install as
+   above. Plain HTTP is permitted only for that configured host on your own network (for example,
+   `http://192.168.1.20:8096`); use HTTPS elsewhere. On a TV whose VPN cannot reach a Tailscale node or resolve its name,
+   use its working local-network address. No global network settings need changing.
+2. Open Jellyfin on the TV and sign in with the account whose channels should appear. In Jellyfin's **Authentication →
+   Automatic sign in**, choose that specific account to skip “Who's watching?” when a channel is selected.
+3. On your computer, run `python3 tools/setup_jellyfin.py <TV IP>` (Android 9 or newer). Enter a Jellyfin API key when
+   prompted; it is not displayed. Choose the account and **this TV** from the list of active Jellyfin Android TV sessions.
+   The tool verifies that the TV session belongs to the selected account. It only reads server information and saves
+   the connection; it does not start or change a channel.
+4. Press Home. From the app shelf, press **Down** for Live TV, **Left/Right** to browse channels and **OK** to play one
+   in Jellyfin. **Down** again reaches the existing inputs and shortcuts; **Up** or **Back** returns toward the app shelf.
+
+Four channels appear at a time, ordered by channel number, with logos and the current programme when Jellyfin provides
+them. The list refreshes every five minutes while Home is visible, and cached channels remain visible if the server
+is temporarily unavailable. Up to 300 channels are loaded. This does not add a video player to the launcher: Jellyfin
+handles playback. Commands are pinned to the selected device ID **and account**, so another TV is not selected by name.
+
+The API key grants server access. It stays in the app's private storage through the existing ADB-only Secrets provider,
+not in `config.properties`, the APK or a command-line argument. Authenticated requests never follow redirects. To remove
+the saved connection, run `python3 tools/send_key.py --remove <TV IP> jellyfin_connection`; to remove the row too, clear
+`jellyfin_server` and rebuild. Re-running the setup tool can change the account, key or target TV; press Home afterward.
+
+The installed TV integration was tested on a Xiaomi MiTV with Android 9 and Jellyfin Android TV 0.19.10. Other clients
+must support Jellyfin remote playback. LG/webOS and Samsung/Tizen do not get this row.
 
 ### The TMDB key
 

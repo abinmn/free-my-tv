@@ -30,7 +30,8 @@ public class Secrets extends ContentProvider {
     /** adb's shell (Process.SHELL_UID, which the SDK only names from Android 10). */
     private static final int SHELL_UID = 2000;
     static final String IMMICH_KEY = "immich_api_key", HOME_ASSISTANT_TOKEN = "home_assistant_token";
-    private static final List<String> NAMES = Arrays.asList(IMMICH_KEY, HOME_ASSISTANT_TOKEN);
+    static final String JELLYFIN_CONNECTION = "jellyfin_connection";
+    private static final List<String> NAMES = Arrays.asList(IMMICH_KEY, HOME_ASSISTANT_TOKEN, JELLYFIN_CONNECTION);
 
     private static File file(Context c, String name) {
         return new File(new File(c.getFilesDir(), "secrets"), name);
